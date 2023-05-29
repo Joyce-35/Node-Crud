@@ -1,6 +1,7 @@
 //require express and bodyparser
 const express = require("express")
 const bodyParser = require("body-parser")
+const mongoose = require("mongoose")
 
 //create instances
 const app = express()
@@ -9,60 +10,35 @@ const app = express()
 //middlewares
 app.use(bodyParser.json())
 
-//database
-let bookdb =[
-
-]
 //models
-class BookModel {
-    constructor({title, author, description}){
-        this.title = title
-        this.author = author
-        this.description = description
-    }
-    save(){
-      bookdb.push(this)
-      return this
-    }
-    static all(){
-        return bookdb
-    }
-    static update(updateInfo = {}){
-      bookdb = bookdb.map(book =>{
-            if (book.title === updateInfo.title) {
-                return {...book, ...updateInfo}
-            }
-            return book
-        })
-    }
-    static delete({title}){
-        let deleted = null
-       bookdb = bookdb.filter(book => {
-            if (book.title !== title) {
-               
-                return true
-            }
-            deleted = book
-            return false
-        })
-        return deleted
-        
-    }
-}
-
+const BookSchema = mongoose.Schema({
+    title:String,
+    author:String,
+    description: String
+})
+const BookModel = mongoose.model('Book', BookSchema)
 //handles
+
 const viewbook = (req, res) =>{
     //listbooks
-    const books = BookModel.all()
-    res.json({data: books})
+    const {id} = req.params
+     BookModel.find({title: id}).then(books =>{
+        res.json({data: books})
+     }).catch(err => console.log(err))
+  
 }
+
 const createbook = (req, res) =>{
     //createbooks
     const {title, author, description} = req.body
     const book = new BookModel({title, author, description})
-    book.save()
-    res.json({message: 'create successful', data: book})
+    book.save().then(result =>{
+        res.json({message: 'create successful', data: book})
+
+    }).catch(err => console.log(err))
+  
 }
+/*
 const updatebook = (req, res) =>{
     //updatebooks
     const {title, author, description} = req.body
@@ -75,20 +51,28 @@ const deletebook = (req, res) =>{
    let deleted =  BookModel.delete({title})
    res.json({message: "book deleted", data: deleted})
 }
+
 //routes
-//view books
-app.get('/book',viewbook)
+
 //create books
+*/
 app.post('/book',createbook)
+//view books
+app.get('/books/:id',viewbook)
+/*
 //update
 app.put('/book',updatebook)
 //delete
 app.delete('/book',deletebook)
 
 
-
+*/
 
 //port
-app.listen(3000, function () {
-    console.log("server started on port 3000")
-})
+mongoose.connect("mongodb+srv://Joyce:joyce1355@cluster0.mceuxxy.mongodb.net/?retryWrites=true&w=majority")
+.then(result => {
+    app.listen(3000, function () {
+        console.log("server started on port 3000")
+    })
+}).catch(err => console.log(err))
+
